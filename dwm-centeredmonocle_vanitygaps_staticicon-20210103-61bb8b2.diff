@@ -41,7 +41,7 @@ index 1c0b587..7b5ed79 100644
  	{ MODKEY,                       XK_Tab,    view,           {0} },
  	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
 diff --git a/dwm.c b/dwm.c
-index 664c527..dfb1009 100644
+index 664c527..34bd85d 100644
 --- a/dwm.c
 +++ b/dwm.c
 @@ -119,6 +119,10 @@ struct Monitor {
@@ -120,7 +120,24 @@ index 664c527..dfb1009 100644
  	m->lt[0] = &layouts[0];
  	m->lt[1] = &layouts[1 % LENGTH(layouts)];
  	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
-@@ -1498,6 +1532,111 @@ setfullscreen(Client *c, int fullscreen)
+@@ -1106,14 +1140,12 @@ monocle(Monitor *m)
+ {
+ 	unsigned int n = 0;
+ 	Client *c;
+-
+ 	for (c = m->clients; c; c = c->next)
+ 		if (ISVISIBLE(c))
+ 			n++;
+-	if (n > 0) /* override layout symbol */
+-		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
+ 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
+-		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
++		resize(c, m->wx - m->gappov * enablegaps
++, m->wy - m->gappoh * enablegaps, m->ww - 2 * c->bw - 2 * m->gappov * enablegaps, m->wh - 2 * c->bw - 2 * m->gappoh * enablegaps, 0);
+ }
+ 
+ void
+@@ -1498,6 +1530,111 @@ setfullscreen(Client *c, int fullscreen)
  	}
  }
  
@@ -232,7 +249,7 @@ index 664c527..dfb1009 100644
  void
  setlayout(const Arg *arg)
  {
-@@ -1674,28 +1813,34 @@ tagmon(const Arg *arg)
+@@ -1674,28 +1811,34 @@ tagmon(const Arg *arg)
  void
  tile(Monitor *m)
  {

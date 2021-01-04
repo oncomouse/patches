@@ -41,7 +41,7 @@ index 1c0b587..7b5ed79 100644
  	{ MODKEY,                       XK_Tab,    view,           {0} },
  	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
 diff --git a/dwm.c b/dwm.c
-index 664c527..34bd85d 100644
+index 664c527..e9541cf 100644
 --- a/dwm.c
 +++ b/dwm.c
 @@ -119,6 +119,10 @@ struct Monitor {
@@ -132,8 +132,8 @@ index 664c527..34bd85d 100644
 -		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
  	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
 -		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
-+		resize(c, m->wx - m->gappov * enablegaps
-+, m->wy - m->gappoh * enablegaps, m->ww - 2 * c->bw - 2 * m->gappov * enablegaps, m->wh - 2 * c->bw - 2 * m->gappoh * enablegaps, 0);
++		resize(c, m->wx + m->gappov * enablegaps
++, m->wy + m->gappoh * enablegaps, m->ww - 2 * c->bw - 2 * m->gappov * enablegaps, m->wh - 2 * c->bw - 2 * m->gappoh * enablegaps, 0);
  }
  
  void

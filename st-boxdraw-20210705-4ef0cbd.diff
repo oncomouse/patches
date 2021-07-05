@@ -547,14 +547,6 @@ index 6f05dce..24a19f9 100644
  	{ XK_Delete,        XK_ANY_MOD,     "\033[3~",      +1,    0},
  	{ XK_BackSpace,     XK_NO_MOD,      "\177",          0,    0},
  	{ XK_BackSpace,     Mod1Mask,       "\033\177",      0,    0},
-diff --git a/config.h b/config.h
-new file mode 120000
-index 0000000..da4689e
---- /dev/null
-+++ b/config.h
-@@ -0,0 +1 @@
-+/home/andrew/Projects/dwm-config/conf/st/config.h
-\ No newline at end of file
 diff --git a/config.mk b/config.mk
 index c070a4a..89e3d83 100644
 --- a/config.mk

@@ -1,0 +1,280 @@
+diff --git a/Makefile b/Makefile
+index ef43ef4..2304af2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,9 +1,10 @@
+ PREFIX ?= /usr/local
+ CC ?= cc
+-LDFLAGS = -lX11
++LDFLAGS = -lX11 -pthread
+ 
+ output: dwmblocks.c blocks.def.h blocks.h
+ 	${CC}  dwmblocks.c $(LDFLAGS) -o dwmblocks
++  
+ blocks.h:
+ 	cp blocks.def.h $@
+ 
+diff --git a/README.md b/README.md
+index dda2259..00896ed 100644
+--- a/README.md
++++ b/README.md
+@@ -12,4 +12,4 @@ This is so you can edit your status bar commands and they will not get overwritt
+ Here are some patches to dwmblocks that add features that I either don't want to merge in, or that require a dwm patch to work.
+ I do not maintain these but I will take pull requests to update them.
+ <br>
+-<a href=https://gist.github.com/IGeraGera/e4a5583b91b3eec2e81fdceb44dea717>dwmblocks-statuscmd-b6b0be4.diff</a>
++<a href=https://gist.github.com/toniz4/41d168719e22bf7bc4ecff09d424b7d2>dwmblocks-statuscmd-20200717-941f415.diff</a>
+diff --git a/blocks.def.h b/blocks.def.h
+index 9c22d68..e06eaad 100644
+--- a/blocks.def.h
++++ b/blocks.def.h
+@@ -1,5 +1,5 @@
+ //Modify this file to change what commands output to your statusbar, and recompile using the make command.
+-static const Block blocks[] = {
++static Block blocks[] = {
+ 	/*Icon*/	/*Command*/		/*Update Interval*/	/*Update Signal*/
+ 	{"Mem:", "free -h | awk '/^Mem/ { print $3\"/\"$2 }' | sed s/i//g",	30,		0},
+ 
+diff --git a/dwmblocks.c b/dwmblocks.c
+index ded717c..c58efe2 100644
+--- a/dwmblocks.c
++++ b/dwmblocks.c
+@@ -3,6 +3,7 @@
+ #include<string.h>
+ #include<unistd.h>
+ #include<signal.h>
++#include<pthread.h>
+ #ifndef NO_X
+ #include<X11/Xlib.h>
+ #endif
+@@ -23,80 +24,93 @@ typedef struct {
+ 	char* command;
+ 	unsigned int interval;
+ 	unsigned int signal;
++	int calledBySignal; //Keep track if "block is called by signal"
+ } Block;
+ #ifndef __OpenBSD__
+ void dummysighandler(int num);
+ #endif
+ void sighandler(int num);
+-void getcmds(int time);
+ void getsigcmds(unsigned int signal);
+ void setupsignals();
+ void sighandler(int signum);
+-int getstatus(char *str, char *last);
++int getblockstatus(char *str, char *last);
++void setroot(int i);
+ void statusloop();
+ void termhandler();
+-void pstdout();
++void pstdout(int i);
+ #ifndef NO_X
+-void setroot();
+-static void (*writestatus) () = setroot;
++static void (*writestatus) (int i) = setroot;
+ static int setupX();
+ static Display *dpy;
+ static int screen;
+ static Window root;
+ #else
+-static void (*writestatus) () = pstdout;
++static void (*writestatus) (int i) = pstdout;
+ #endif
+ 
+ 
+ #include "blocks.h"
+ 
+-static char statusbar[LENGTH(blocks)][CMDLENGTH] = {0};
+-static char statusstr[2][STATUSLENGTH];
++static char statusbar[2][LENGTH(blocks)][CMDLENGTH] = {0};
++static char statusstr[STATUSLENGTH];
+ static int statusContinue = 1;
+ static int returnStatus = 0;
++static pthread_t threadId;
++static pthread_attr_t attr;
++static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; //Global mutex
+ 
+-//opens process *cmd and stores output in *output
+-void getcmd(const Block *block, char *output)
++//opens process *cmd, call writestatus and loop current block
++void *blockLoop(void *currentBlock)
+ {
+-	strcpy(output, block->icon);
+-	FILE *cmdf = popen(block->command, "r");
+-	if (!cmdf)
+-		return;
+-	int i = strlen(block->icon);
+-	fgets(output+i, CMDLENGTH-i-delimLen, cmdf);
+-	i = strlen(output);
+-	if (i == 0) {
+-		//return if block and command output are both empty
+-		pclose(cmdf);
+-		return;
+-	}
+-	if (delim[0] != '\0') {
+-		//only chop off newline if one is present at the end
+-		i = output[i-1] == '\n' ? i-1 : i;
+-		strncpy(output+i, delim, delimLen); 
+-	}
+-	else
+-		output[i++] = '\0';
+-	pclose(cmdf);
+-}
+-
+-void getcmds(int time)
+-{
+-	const Block* current;
+-	for (unsigned int i = 0; i < LENGTH(blocks); i++) {
+-		current = blocks + i;
+-		if ((current->interval != 0 && time % current->interval == 0) || time == -1)
+-			getcmd(current,statusbar[i]);
++	Block *block = (Block*) currentBlock;
++	int blockNum = block - blocks;
++
++	//Use temporary string so output doesn't get blank for other threads
++	char str[255] = {0};
++	
++	//Loop until program is to be killed (may be un-necessary)
++	while (statusContinue) {
++		FILE *cmdf = popen(block->command, "r");
++		if (cmdf) {
++			strcpy(str, block->icon);
++			int i = strlen(block->icon);
++			fgets(str+i, CMDLENGTH-i-delimLen, cmdf);
++			i = strlen(str);
++			if (i != 0) {//return if block and command output are both empty
++				//only chop off newline if one is present at the end
++				i = str[i-1] == '\n' ? --i : i;
++				strncpy(str+i, delim, delimLen); 
++				strcpy(statusbar[0][blockNum], str);
++
++				//Only allow one block at the time to use writestatus
++				pthread_mutex_lock(&mutex);
++				writestatus(blockNum);
++				pthread_mutex_unlock(&mutex);
++			}
++		}
++		//Call pclose() here so it always gets called
++    		pclose(cmdf);
++		//Kill thread if created by signal
++		if ( block->calledBySignal){
++			block->calledBySignal = 0;
++			break;
++		}
++		//Wait block specific interval, and call function again
++		sleep(block->interval);
+ 	}
++	pthread_exit(NULL);
+ }
+ 
+ void getsigcmds(unsigned int signal)
+ {
+-	const Block *current;
++	Block *current;
+ 	for (unsigned int i = 0; i < LENGTH(blocks); i++) {
+ 		current = blocks + i;
+-		if (current->signal == signal)
+-			getcmd(current,statusbar[i]);
++		//Ignore signals if thread called by signal is already running, this seems to prevent other blocks from freezing when signal is spammed
++		if (current->signal && !current->calledBySignal){
++			current->calledBySignal = 1;
++			pthread_create(&threadId, &attr, blockLoop, (void*) current);
++		}
+ 	}
+ }
+ 
+@@ -115,22 +129,27 @@ void setupsignals()
+ 
+ }
+ 
+-int getstatus(char *str, char *last)
++int getblockstatus(char *str, char *last)
+ {
+-	strcpy(last, str);
+-	str[0] = '\0';
+-	for (unsigned int i = 0; i < LENGTH(blocks); i++)
+-		strcat(str, statusbar[i]);
+-	str[strlen(str)-strlen(delim)] = '\0';
+-	return strcmp(str, last);//0 if they are the same
++	if (strcmp(str, last)) { //0 if they are the same
++		strcpy(last, str);
++		statusstr[0] = '\0';
++		for ( int i = 0; i < LENGTH(blocks); i++)
++			strcat(statusstr, statusbar[0][i]);
++
++		statusstr[strlen(statusstr)-strlen(delim)] = '\0';
++		return 0;
++	}
++	return -1;
+ }
+ 
+ #ifndef NO_X
+-void setroot()
++void setroot(int i)
+ {
+-	if (!getstatus(statusstr[0], statusstr[1]))//Only set root if text has changed.
++	//Only compare single "block" of text
++	if (getblockstatus(statusbar[0][i], statusbar[1][i]))//Only set root if text has changed.
+ 		return;
+-	XStoreName(dpy, root, statusstr[0]);
++	XStoreName(dpy, root, statusstr);
+ 	XFlush(dpy);
+ }
+ 
+@@ -147,11 +166,11 @@ int setupX()
+ }
+ #endif
+ 
+-void pstdout()
++void pstdout(int i)
+ {
+-	if (!getstatus(statusstr[0], statusstr[1]))//Only write out if text has changed.
++	if (getblockstatus(statusbar[0][i], statusbar[1][i]))///Only write out if text has changed.
+ 		return;
+-	printf("%s\n",statusstr[0]);
++	printf("%s\n",statusstr);
+ 	fflush(stdout);
+ }
+ 
+@@ -159,13 +178,14 @@ void pstdout()
+ void statusloop()
+ {
+ 	setupsignals();
+-	int i = 0;
+-	getcmds(-1);
+-	while (1) {
+-		getcmds(i++);
+-		writestatus();
+-		if (!statusContinue)
+-			break;
++	//Start block threads
++	for (int i = 0; i < LENGTH(blocks); i++) {
++		Block *current = blocks+i;
++		if ( current->interval != 0 )
++		pthread_create(&threadId, &attr, blockLoop, (void*) current);
++	}
++	//Keep main process running
++	while (statusContinue) {
+ 		sleep(1.0);
+ 	}
+ }
+@@ -181,7 +201,6 @@ void dummysighandler(int signum)
+ void sighandler(int signum)
+ {
+ 	getsigcmds(signum-SIGPLUS);
+-	writestatus();
+ }
+ 
+ void termhandler()
+@@ -205,6 +224,11 @@ int main(int argc, char** argv)
+ 	delim[delimLen++] = '\0';
+ 	signal(SIGTERM, termhandler);
+ 	signal(SIGINT, termhandler);
++
++	//Create attrib for creating thread, so threads won't need to get attached
++	pthread_attr_init(&attr);	
++	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
++
+ 	statusloop();
+ #ifndef NO_X
+ 	XCloseDisplay(dpy);

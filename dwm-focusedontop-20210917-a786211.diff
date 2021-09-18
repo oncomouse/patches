@@ -31,7 +31,7 @@ index a2ac963..f76f0bf 100644
 +	{ NULL,       NULL,       NULL,     NULL,  WTYPE "SPLASH",   0,         1,          1,          -1 },
 +	{ "Gimp",     NULL,       NULL,     NULL,  NULL,             0,         1,          0,          -1 },
 +	{ "Firefox",  NULL,       NULL,     NULL,  NULL,             1 << 8,    0,          0,          -1 },
-+{ NULL,       "pop-up",   NULL,     NULL,  NULL,             0,         1,          1,          -1 },
++	{ NULL,       "pop-up",   NULL,     NULL,  NULL,             0,         1,          1,          -1 },
  };
  
  /* layout(s) */

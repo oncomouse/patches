@@ -1,0 +1,11 @@
+diff --git a/Makefile b/Makefile
+index ef43ef4..6482769 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,5 @@
+-PREFIX ?= /usr/local
++XDG_DATA_HOME ?= $(HOME)/.local/share
++PREFIX ?= ${XDG_DATA_HOME}
+ CC ?= cc
+ LDFLAGS = -lX11
+ 

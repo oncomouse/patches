@@ -1,0 +1,30 @@
+diff --git a/Makefile b/Makefile
+new file mode 100644
+index 0000000..dc05f6d
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,24 @@
++CC ?= cc
++CFLAGS ?= -pedantic -Wall -Wfatal-errors -std=c99 -D_POSIX_C_SOURCE=200809L
++PREFIX ?= /usr/local
++
++OBJS = vi.o ex.o lbuf.o mot.o sbuf.o ren.o dir.o syn.o reg.o led.o \
++	uc.o term.o rset.o regex.o cmd.o conf.o
++
++UNAME_S := $(shell uname -s)
++ifneq ($(filter *BSD*, $(UNAME_S)),)
++	CFLAGS += -D_BSD_SOURCE
++endif
++
++all: vi
++
++vi:
++	$(CC) vi.c $(CFLAGS) -o vi
++
++install: vi
++	mkdir -p ${DESTDIR}${PREFIX}/bin
++	cp -f vi ${DESTDIR}${PREFIX}/bin/vi
++	chmod 755 ${DESTDIR}${PREFIX}/bin/vi
++
++clean:
++	rm -f *.o vi

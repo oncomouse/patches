@@ -1,0 +1,16 @@
+diff --git a/config.mk b/config.mk
+index c070a4a..81ca329 100644
+--- a/config.mk
++++ b/config.mk
+@@ -4,8 +4,9 @@ VERSION = 0.8.4
+ # Customize below to fit your system
+ 
+ # paths
+-PREFIX = /usr/local
+-MANPREFIX = $(PREFIX)/share/man
++XDG_DATA_HOME ?= ${HOME}/.local/share
++PREFIX = ${HOME}/.local
++MANPREFIX = ${XDG_DATA_HOME}/man
+ 
+ X11INC = /usr/X11R6/include
+ X11LIB = /usr/X11R6/lib

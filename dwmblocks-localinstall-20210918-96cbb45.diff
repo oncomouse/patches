@@ -1,0 +1,10 @@
+diff --git a/Makefile b/Makefile
+index ef43ef4..b8e245c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,4 @@
+-PREFIX ?= /usr/local
++PREFIX ?= ${HOME}/.local
+ CC ?= cc
+ LDFLAGS = -lX11
+ 

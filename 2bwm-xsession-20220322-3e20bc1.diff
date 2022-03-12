@@ -1,0 +1,40 @@
+diff --git a/2bwm.desktop b/2bwm.desktop
+new file mode 100644
+index 0000000..f75061a
+--- /dev/null
++++ b/2bwm.desktop
+@@ -0,0 +1,6 @@
++[Desktop Entry]
++Encoding=UTF-8
++Name=2bwm
++Comment=2bwm - A fast floating and keyboard driven window manager
++Exec=2bwm
++Type=XSession
+diff --git a/Makefile b/Makefile
+index 6052705..7eafb0b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -4,6 +4,7 @@ RM=/bin/rm
+ PREFIX?=/usr/local
+ LIB_SUFFIX?=lib
+ MANPREFIX?=$(PREFIX)/share/man
++XSESSIONPREFIX=$(PREFIX)/share/xsessions
+ TWOBWM_PATH?=${PREFIX}/bin/2bwm
+ X11_INCLUDE?=/usr/local/include
+ 
+@@ -36,6 +37,7 @@ install: $(TARGETS)
+ 	test -d $(DESTDIR)$(MANPREFIX)/man1 || mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+ 	install -pm 644 2bwm.man $(DESTDIR)$(MANPREFIX)/man1/2bwm.1
+ 	install -pm 644 hidden.man $(DESTDIR)$(MANPREFIX)/man1/hidden.1
++	install -pm 644 2bwm.desktop $(DESTDIR)$(XSESSIONPREFIX)/2bwm.desktop
+ 
+ uninstall: deinstall
+ deinstall:
+@@ -43,6 +45,7 @@ deinstall:
+ 	$(RM) $(DESTDIR)$(MANPREFIX)/man1/2bwm.1
+ 	$(RM) $(DESTDIR)$(PREFIX)/bin/hidden
+ 	$(RM) $(DESTDIR)$(MANPREFIX)/man1/hidden.1
++	$(RM) $(DESTDIR)$(XSESSIONPREFIX)/2bwm.desktop
+ 
+ $(DIST).tar.bz2:
+ 	mkdir $(DIST)

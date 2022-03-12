@@ -1,5 +1,5 @@
 diff --git a/2bwm.c b/2bwm.c
-index fdb5437..00e890d 100644
+index 28f05ad..ffb4c7b 100644
 --- a/2bwm.c
 +++ b/2bwm.c
 @@ -21,6 +21,7 @@
@@ -10,28 +10,27 @@ index fdb5437..00e890d 100644
  #include <xcb/randr.h>
  #include <xcb/xcb_keysyms.h>
  #include <xcb/xcb_icccm.h>
-@@ -49,6 +50,11 @@ static xcb_drawable_t dock_win=0;          // A single dock always on top.
- static struct item *winlist = NULL;        // Global list of all client windows.
- static struct item *monlist = NULL;        // List of all physical monitor outputs.
- static struct item *wslist[WORKSPACES];
-+///---Autostart Globals---///
+@@ -57,6 +58,7 @@ static const char *atomnames[NB_ATOMS][1] = {
+ xcb_atom_t ATOM[NB_ATOMS];
+ ///---Functions prototypes---///
+ static void run(void);
++static void runautostart(void);
+ static bool setup(int);
+ static void install_sig_handlers(void);
+ static void start(const Arg *);
+@@ -156,6 +158,10 @@ static void getmonsize(int8_t, int16_t *, int16_t *, uint16_t *, uint16_t *,cons
+ static void noborder(int16_t *,struct client *, bool);
+ static void movepointerback(const int16_t, const int16_t, const struct client *);
+ static void snapwindow(struct client *);
 +static const char autostartblocksh[] = "autostart_blocking.sh";
 +static const char autostartsh[] = "autostart.sh";
 +static const char twobwmdir[] = "2bwm";
 +static const char localshare[] = ".local/share";
- ///---Global configuration.---///
- static const char *atomnames[NB_ATOMS][1] = {
- 	{"WM_DELETE_WINDOW"},
-@@ -91,6 +97,7 @@ static void nextworkspace();
- static void getrandr(void);
- static void raise_current_window(void);
- static void raiseorlower();
-+static void runautostart(void);
- static void setunfocus(void);
- static void maximize(const Arg *);
- static void fullscreen(const Arg *);
-@@ -234,6 +241,83 @@ saveorigsize(struct client *client)
-     client->origsize.height = client->height;
+ #include "config.h"
+ 
+ ///---Function bodies---///
+@@ -3105,6 +3111,83 @@ run(void)
+ 	}
  }
  
 +void
@@ -43,8 +42,8 @@ index fdb5437..00e890d 100644
 +	char *home;
 +	struct stat sb;
 +
++	/* highly unlikely that this will happen */
 +	if ((home = getenv("HOME")) == NULL)
-+		/* this is almost impossible */
 +		return;
 +
 +	/* if $XDG_DATA_HOME is set and not empty, use $XDG_DATA_HOME/2bwm,
@@ -111,6 +110,15 @@ index fdb5437..00e890d 100644
 +	free(path);
 +}
 +
- void
- centerpointer(xcb_drawable_t win, struct client *cl)
- {
+ /* Get a defined atom from the X server. */
+ xcb_atom_t
+ getatom(const char *atom_name)
+@@ -3310,6 +3393,8 @@ setup(int scrno)
+ 	events[XCB_BUTTON_PRESS]        = buttonpress;
+ 	events[XCB_CLIENT_MESSAGE]      = clientmessage;
+ 
++	runautostart();
++
+ 	return true;
+ }
+ 

@@ -1,0 +1,67 @@
+diff --git a/Config.mk.in b/Config.mk.in
+index 8c62425..2f2d322 100644
+--- a/Config.mk.in
++++ b/Config.mk.in
+@@ -15,6 +15,7 @@ bindir		:= @bindir@
+ datadir		:= @datadir@
+ mandir		:= @mandir@
+ man1dir		:= @man1dir@
++xsessiondir := @xsessiondir@
+ TMPDIR		:= @TMPDIR@
+ builddir	:= @builddir@/${name}
+ O		:= .o/
+diff --git a/Makefile b/Makefile
+index ac9d647..377f55e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -89,6 +89,26 @@ uninstall-man:
+ 	fi
+ endif
+ 
++ifdef xsessiondir
++xsessiond := ${DESTDIR}${xsessiondir}
++xsessioni := ${xsessiond}/${name}.desktop
++
++${xsessiond}:
++	@echo "Creating $@ ..."
++	@${INSTALL} -d $@
++${xsessioni}: ${name}.desktop | ${xsessiond}
++	@echo "Install $@ ..."
++	@${INSTALL_DATA} $< $@
++installdirs: ${xsessiond}
++install: ${xsessioni}
++uninstall: uninstall-xsession
++uninstall-xsession:
++	@if [ -f ${xsessioni} ]; then\
++		echo "Removing ${xsessioni} ...";\
++		rm -f ${xsessioni};\
++	fi
++endif
++
+ ################ Maintenance ###########################################
+ 
+ clean:
+diff --git a/berry.desktop b/berry.desktop
+new file mode 100644
+index 0000000..ad9a451
+--- /dev/null
++++ b/berry.desktop
+@@ -0,0 +1,6 @@
++[Desktop Entry]
++Encoding=UTF-8
++Name=berry
++Comment=Berry - A healthy, byte-sized window manager
++Exec=berry
++Type=XSession
+diff --git a/configure b/configure
+index d5916a7..9b5c9e2 100755
+--- a/configure
++++ b/configure
+@@ -138,6 +138,7 @@ s/@bindir@/${ac_var_bindir:=\$\{prefix\}\/bin}/g
+ s/@datadir@/${ac_var_datadir:=\$\{prefix\}\/share}/g
+ s/@mandir@/${ac_var_mandir:=\$\{datadir\}\/man}/g
+ s/@man1dir@/${ac_var_man1dir:=\$\{mandir\}\/man1}/g
++s/@xsessiondir@/${ac_var_xsessiondir:=\$\{datadir\}\/xsessions}/g
+ s/@TMPDIR@/$(escpath ${TMPDIR:-/tmp})/g
+ s/@builddir@/\$\{TMPDIR\}\/make/g"
+ 

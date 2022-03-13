@@ -1,0 +1,38 @@
+diff --git a/Makefile b/Makefile
+index d22938f..4f96916 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,7 @@
+ # paths
+ PREFIX = /usr/local
+ MANPREFIX = ${PREFIX}/share/man
++XSESSIONPREFIX=$(PREFIX)/share/xsessions
+ LOCALINC = /usr/local/include
+ LOCALLIB = /usr/local/lib
+ X11INC = /usr/X11R6/include
+@@ -39,11 +40,13 @@ install: all
+ 	install -D -m 755 shod ${DESTDIR}${PREFIX}/bin/shod
+ 	install -D -m 755 shodc ${DESTDIR}${PREFIX}/bin/shodc
+ 	install -D -m 644 shod.1 ${DESTDIR}${MANPREFIX}/man1/shod.1
++	install -D -m 644 shod.desktop ${DESTDIR}${XSESSIONPREFIX}/shod.desktop
+ 
+ uninstall:
+ 	rm -f ${DESTDIR}/${PREFIX}/bin/shod
+ 	rm -f ${DESTDIR}/${PREFIX}/bin/shodc
+ 	rm -f ${DESTDIR}/${MANPREFIX}/man1/shod.1
++	rm -f ${DESTDIR}${XSESSIONPREFIX}/shod.desktop
+ 
+ clean:
+ 	-rm ${OBJS} ${PROGS}
+diff --git a/shod.desktop b/shod.desktop
+new file mode 100644
+index 0000000..904f5d9
+--- /dev/null
++++ b/shod.desktop
+@@ -0,0 +1,6 @@
++[Desktop Entry]
++Encoding=UTF-8
++Name=shod
++Comment=shod - tabbed window manager that can tile windows inside floating containers
++Exec=shod
++Type=XSession

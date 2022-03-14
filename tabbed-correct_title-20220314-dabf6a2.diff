@@ -1,0 +1,36 @@
+diff --git a/tabbed.c b/tabbed.c
+index eafe28a..5aa90e1 100644
+--- a/tabbed.c
++++ b/tabbed.c
+@@ -48,7 +48,7 @@
+ #define TEXTW(x)                (textnw(x, strlen(x)) + dc.font.height)
+ 
+ enum { ColFG, ColBG, ColLast };       /* color */
+-enum { WMProtocols, WMDelete, WMName, WMState, WMFullscreen,
++enum { WMProtocols, WMDelete, NetWMName, WMName, WMState, WMFullscreen,
+        XEmbed, WMSelectTab, WMLast }; /* default atoms */
+ 
+ typedef union {
+@@ -991,6 +991,7 @@ setup(void)
+ 	wmatom[WMFullscreen] = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN",
+ 	                                   False);
+ 	wmatom[WMName] = XInternAtom(dpy, "_NET_WM_NAME", False);
++	wmatom[NetWMName] = XInternAtom(dpy, "_NET_WM_NAME", False);
+ 	wmatom[WMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
+ 	wmatom[WMSelectTab] = XInternAtom(dpy, "_TABBED_SELECT_TAB", False);
+ 	wmatom[WMState] = XInternAtom(dpy, "_NET_WM_STATE", False);
+@@ -1257,10 +1258,10 @@ xsettitle(Window w, const char *str)
+ {
+ 	XTextProperty xtp;
+ 
+-	if (XmbTextListToTextProperty(dpy, (char **)&str, 1,
+-	    XCompoundTextStyle, &xtp) == Success) {
+-		XSetTextProperty(dpy, w, &xtp, wmatom[WMName]);
+-		XSetTextProperty(dpy, w, &xtp, XA_WM_NAME);
++	if (Xutf8TextListToTextProperty(dpy, (char **)&str, 1,
++	    XUTF8StringStyle, &xtp) == Success) {
++		XSetWMName(dpy, w, &xtp);
++		XSetTextProperty(dpy, w, &xtp, wmatom[NetWMName]);
+ 		XFree(xtp.value);
+ 	}
+ }

@@ -23,7 +23,7 @@ index 0000000..4432806
 +++ b/dwm.desktop
 @@ -0,0 +1,7 @@
 +[Desktop Entry]
-+Encoding=UTF=8
++Encoding=UTF-8
 +Name=DWM
 +Comment=The Dynamic Window Manager
 +Exec=dwm

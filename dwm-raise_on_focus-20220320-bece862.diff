@@ -1,0 +1,52 @@
+diff --git a/Makefile b/Makefile
+index 77bcbc0..5dd4646 100644
+--- a/Makefile
++++ b/Makefile
+@@ -43,9 +43,12 @@ install: all
+ 	mkdir -p ${DESTDIR}${MANPREFIX}/man1
+ 	sed "s/VERSION/${VERSION}/g" < dwm.1 > ${DESTDIR}${MANPREFIX}/man1/dwm.1
+ 	chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwm.1
++	mkdir -p ${DESTDIR}${PREFIX}/share/xsessions
++	cp -f dwm.desktop ${DESTDIR}${PREFIX}/share/xsessions
+ 
+ uninstall:
+ 	rm -f ${DESTDIR}${PREFIX}/bin/dwm\
+-		${DESTDIR}${MANPREFIX}/man1/dwm.1
++		${DESTDIR}${MANPREFIX}/man1/dwm.1\
++		${DESTDIR}${PREFIX}/share/xessions/dwm.desktop
+ 
+ .PHONY: all options clean dist install uninstall
+diff --git a/dwm.c b/dwm.c
+index 5f16260..a96f33c 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -487,7 +487,6 @@ cleanup(void)
+ 		drw_cur_free(drw, cursor[i]);
+ 	for (i = 0; i < LENGTH(colors); i++)
+ 		free(scheme[i]);
+-	free(scheme);
+ 	XDestroyWindow(dpy, wmcheckwin);
+ 	drw_free(drw);
+ 	XSync(dpy, False);
+@@ -1064,7 +1063,7 @@ manage(Window w, XWindowAttributes *wa)
+ 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+ 	grabbuttons(c, 0);
+ 	if (!c->isfloating)
+-		c->isfloating = c->oldstate = t || c->isfixed;
++		c->isfloating = c->oldstate = trans != None || c->isfixed;
+ 	if (c->isfloating)
+ 		XRaiseWindow(dpy, c->win);
+ 	attach(c);
+diff --git a/dwm.desktop b/dwm.desktop
+new file mode 100644
+index 0000000..4432806
+--- /dev/null
++++ b/dwm.desktop
+@@ -0,0 +1,7 @@
++[Desktop Entry]
++Encoding=UTF=8
++Name=DWM
++Comment=The Dynamic Window Manager
++Exec=dwm
++Icon=dwm
++Type=XSession

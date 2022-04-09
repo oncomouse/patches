@@ -1,0 +1,12 @@
+diff --git a/dwm.c b/dwm.c
+index 5f16260..d181da4 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -802,6 +802,7 @@ focus(Client *c)
+ 		grabbuttons(c, 1);
+ 		XSetWindowBorder(dpy, c->win, scheme[SchemeSel][ColBorder].pixel);
+ 		setfocus(c);
++		XRaiseWindow(dpy, c->win);
+ 	} else {
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+ 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
